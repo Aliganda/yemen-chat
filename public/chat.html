@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>يمن شات</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      padding: 30px;
+      direction: rtl;
+      background-color: #f2f2f2;
+      color: #000;
+      transition: all 0.3s;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      width: 200px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      margin: 10px 0;
+    }
+    #users {
+      margin-bottom: 20px;
+    }
+    .dark-mode {
+      background-color: #121212;
+      color: #fff;
+    }
+    .dark-mode input, .dark-mode button {
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #555;
+    }
+  </style>
+</head>
+<body>
+<audio id="notification" src="ding.mp3" preload="auto"></audio>
+
+<script>
+  const user = localStorage.getItem("user");
+  const avatar = localStorage.getItem("avatar");
+
+  if (!user) {
+    window.location.href = "index.html";
+  }
+
+  // تفعيل الوضع حسب ما تم حفظه
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "dark") {
+    document.body.classList.add("dark-mode");
+  }
+</script>
+
+<h1>مرحبًا بك في يمن شات</h1>
+
+<button onclick="toggleTheme()">🌓 تبديل الوضع</button>
+<button onclick="logout()">🚪 تسجيل خروج</button>
+
+<div>
+  <strong>المستخدمون المتصلون:</strong>
+  <ul id="users"></ul>
+</div>
+
+<ul id="messages"></ul>
+<input id="messageInput" placeholder="اكتب رسالة..." autocomplete="off" />
+<button onclick="sendMessage()">إرسال</button>
+
+<!-- صوت التنبيه -->
+<audio id="notificationSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3" preload="auto"></audio>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  const messages = document.getElementById("messages");
+  const input = document.getElementById("messageInput");
+  const usersList = document.getElementById("users");
+  const username = localStorage.getItem("user");
+  const avatar = localStorage.getItem("avatar") || '';
+  const notification = document.getElementById("notificationSound");
+  const notification = document.getElementById('notification');
+
+
+  socket.emit("new user", username);
+
+  function sendMessage() {
+    const message = input.value;
+    const time = new Date().toLocaleTimeString();
+    socket.emit("chat message", { username, avatar, message, time });
+    input.value = "";
+  }
+
+socket.on("chat message", function({ username, avatar, message, time, messageId }) {
+  const item = document.createElement("li");
+  item.innerHTML = `
+    <div style="display:flex; align-items:center; gap:10px;">
+      <img src="${avatar || 'https://i.imgur.com/blank.png'}" width="40" height="40" style="border-radius:50%;">
+      <div style="text-align:left;">
+        <strong>${username}</strong><br>
+        <span>${message}</span><br>
+        <small style="color:gray">${time}</small>
+        <div class="reactions" data-id="${messageId}" style="margin-top:5px;"></div>
+      </div>
+    </div>
+  `;
+
+  item.addEventListener("click", () => showReactions(item.querySelector(".reactions")));
+
+  messages.appendChild(item);
+  notification.play();
+});
+
+// استقبال التفاعل من السيرفر
+socket.on("reaction", ({ emoji, messageId }) => {
+  const container = document.querySelector(`[data-id="${messageId}"]`);
+  if (container) {
+    container.innerHTML = emoji;
+  }
+});
+
+// دالة عرض التفاعلات
+function showReactions(container) {
+  container.innerHTML = "";
+  const emojis = ['❤️', '😂', '👍', '😢', '😮'];
+  emojis.forEach(emoji => {
+    const btn = document.createElement("button");
+    btn.textContent = emoji;
+    btn.style.marginRight = "5px";
+    btn.style.cursor = "pointer";
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      container.innerHTML = emoji;
+      const messageId = container.getAttribute("data-id");
+      socket.emit("reaction", {
+        emoji,
+        messageId
+      });
+    };
+    container.appendChild(btn);
+  });
+}
+
+
+  socket.on("update users", function(users) {
+    usersList.innerHTML = '';
+    users.forEach(user => {
+      const item = document.createElement("li");
+      item.textContent = user;
+      usersList.appendChild(item);
+    });
+  });
+
+  function logout() {
+    localStorage.removeItem("user");
+    localStorage.removeItem("avatar");
+    window.location.href = "index.html";
+  }
+
+  function toggleTheme() {
+    document.body.classList.toggle("dark-mode");
+    const mode = document.body.classList.contains("dark-mode") ? "dark" : "light";
+    localStorage.setItem("theme", mode);
+  }
+</script>
+
+</body>
+</html>
+
+
+
+

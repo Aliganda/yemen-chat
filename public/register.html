@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>تسجيل مستخدم جديد</title>
+  <style>
+    body { font-family: Arial; background: #e8f0fe; text-align: center; padding: 40px; }
+    input, button { padding: 10px; margin: 8px; width: 220px; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+
+  <h1>تسجيل مستخدم جديد</h1>
+  <input type="text" id="username" placeholder="اسم المستخدم" /><br>
+  <input type="password" id="password" placeholder="كلمة المرور" /><br>
+  <input type="text" id="avatar" placeholder="رابط الصورة الشخصية (اختياري)" /><br>
+  <button onclick="register()">تسجيل</button>
+  <div class="error" id="error"></div>
+
+  <script>
+    async function register() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const avatar = document.getElementById('avatar').value;
+
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, avatar })
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        alert("تم التسجيل بنجاح، يمكنك تسجيل الدخول الآن");
+        window.location.href = "index.html";
+      } else {
+        document.getElementById('error').innerText = result.message;
+      }
+    }
+  </script>
+
+</body>
+</html>
