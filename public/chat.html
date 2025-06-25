@@ -40,17 +40,17 @@
   </style>
 </head>
 <body>
-<audio id="notification" src="ding.mp3" preload="auto"></audio>
+
+<!-- صوت التنبيه -->
+<audio id="notification" src="https://www.soundjay.com/buttons/sounds/button-3.mp3" preload="auto"></audio>
 
 <script>
   const user = localStorage.getItem("user");
-  const avatar = localStorage.getItem("avatar");
+  const avatar = localStorage.getItem("avatar") || '';
 
-  if (!user) {
-    window.location.href = "index.html";
-  }
+  if (!user) window.location.href = "index.html";
 
-  // تفعيل الوضع حسب ما تم حفظه
+  // الوضع الداكن
   const savedTheme = localStorage.getItem("theme");
   if (savedTheme === "dark") {
     document.body.classList.add("dark-mode");
@@ -71,9 +71,6 @@
 <input id="messageInput" placeholder="اكتب رسالة..." autocomplete="off" />
 <button onclick="sendMessage()">إرسال</button>
 
-<!-- صوت التنبيه -->
-<audio id="notificationSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3" preload="auto"></audio>
-
 <script src="/socket.io/socket.io.js"></script>
 <script>
   const socket = io();
@@ -81,70 +78,62 @@
   const input = document.getElementById("messageInput");
   const usersList = document.getElementById("users");
   const username = localStorage.getItem("user");
-  const avatar = localStorage.getItem("avatar") || '';
-  const notification = document.getElementById("notificationSound");
-  const notification = document.getElementById('notification');
-
+  const avatar = localStorage.getItem("avatar");
+  const notification = document.getElementById("notification");
 
   socket.emit("new user", username);
 
   function sendMessage() {
     const message = input.value;
     const time = new Date().toLocaleTimeString();
-    socket.emit("chat message", { username, avatar, message, time });
+    const messageId = Date.now() + Math.random().toString(36).substr(2, 5); // توليد ID فريد
+
+    socket.emit("chat message", { username, avatar, message, time, messageId });
     input.value = "";
   }
 
-socket.on("chat message", function({ username, avatar, message, time, messageId }) {
-  const item = document.createElement("li");
-  item.innerHTML = `
-    <div style="display:flex; align-items:center; gap:10px;">
-      <img src="${avatar || 'https://i.imgur.com/blank.png'}" width="40" height="40" style="border-radius:50%;">
-      <div style="text-align:left;">
-        <strong>${username}</strong><br>
-        <span>${message}</span><br>
-        <small style="color:gray">${time}</small>
-        <div class="reactions" data-id="${messageId}" style="margin-top:5px;"></div>
+  socket.on("chat message", function({ username, avatar, message, time, messageId }) {
+    const item = document.createElement("li");
+    item.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px;">
+        <img src="${avatar || 'https://i.imgur.com/blank.png'}" width="40" height="40" style="border-radius:50%;">
+        <div style="text-align:left;">
+          <strong>${username}</strong><br>
+          <span>${message}</span><br>
+          <small style="color:gray">${time}</small>
+          <div class="reactions" data-id="${messageId}" style="margin-top:5px;"></div>
+        </div>
       </div>
-    </div>
-  `;
-
-  item.addEventListener("click", () => showReactions(item.querySelector(".reactions")));
-
-  messages.appendChild(item);
-  notification.play();
-});
-
-// استقبال التفاعل من السيرفر
-socket.on("reaction", ({ emoji, messageId }) => {
-  const container = document.querySelector(`[data-id="${messageId}"]`);
-  if (container) {
-    container.innerHTML = emoji;
-  }
-});
-
-// دالة عرض التفاعلات
-function showReactions(container) {
-  container.innerHTML = "";
-  const emojis = ['❤️', '😂', '👍', '😢', '😮'];
-  emojis.forEach(emoji => {
-    const btn = document.createElement("button");
-    btn.textContent = emoji;
-    btn.style.marginRight = "5px";
-    btn.style.cursor = "pointer";
-    btn.onclick = (e) => {
-      e.stopPropagation();
-      container.innerHTML = emoji;
-      const messageId = container.getAttribute("data-id");
-      socket.emit("reaction", {
-        emoji,
-        messageId
-      });
-    };
-    container.appendChild(btn);
+    `;
+    item.addEventListener("click", () => showReactions(item.querySelector(".reactions")));
+    messages.appendChild(item);
+    notification.play();
   });
-}
 
+  socket.on("reaction", ({ emoji, messageId }) => {
+    const container = document.querySelector(`[data-id="${messageId}"]`);
+    if (container) {
+      container.innerHTML = emoji;
+    }
+  });
+
+  function showReactions(container) {
+    container.innerHTML = "";
+    const emojis = ['❤️', '😂', '👍', '😢', '😮'];
+    emojis.forEach(emoji => {
+      const btn = document.createElement("button");
+      btn.textContent = emoji;
+      btn.style.marginRight = "5px";
+      btn.style.cursor = "pointer";
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        container.innerHTML = emoji;
+        const messageId = container.getAttribute("data-id");
+        socket.emit("reaction", { emoji, messageId });
+      };
+      container.appendChild(btn);
+    });
+  }
 
   socket.on("update users", function(users) {
     usersList.innerHTML = '';
@@ -170,6 +159,7 @@ function showReactions(container) {
 
 </body>
 </html>
+
 
 
 

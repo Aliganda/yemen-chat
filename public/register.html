@@ -4,25 +4,61 @@
   <meta charset="UTF-8">
   <title>تسجيل مستخدم جديد</title>
   <style>
-    body { font-family: Arial; background: #e8f0fe; text-align: center; padding: 40px; }
-    input, button { padding: 10px; margin: 8px; width: 220px; }
-    .error { color: red; }
+    body {
+      font-family: Arial;
+      background: #e8f0fe;
+      text-align: center;
+      padding: 40px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 8px;
+      width: 250px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+    .link {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
 
   <h1>تسجيل مستخدم جديد</h1>
-  <input type="text" id="username" placeholder="اسم المستخدم" /><br>
-  <input type="password" id="password" placeholder="كلمة المرور" /><br>
+
+  <input type="text" id="username" placeholder="اسم المستخدم" required /><br>
+  <input type="password" id="password" placeholder="كلمة المرور" required /><br>
   <input type="text" id="avatar" placeholder="رابط الصورة الشخصية (اختياري)" /><br>
-  <button onclick="register()">تسجيل</button>
+  
+  <button onclick="register()">📩 تسجيل</button>
   <div class="error" id="error"></div>
+
+  <div class="link">
+    <a href="index.html">🔙 العودة لتسجيل الدخول</a>
+  </div>
 
   <script>
     async function register() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const avatar = document.getElementById('avatar').value;
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const avatar = document.getElementById('avatar').value.trim();
+
+      if (!username || !password) {
+        document.getElementById('error').innerText = "يرجى تعبئة جميع الحقول المطلوبة";
+        return;
+      }
 
       const res = await fetch('/register', {
         method: 'POST',
@@ -33,7 +69,7 @@
       const result = await res.json();
 
       if (result.success) {
-        alert("تم التسجيل بنجاح، يمكنك تسجيل الدخول الآن");
+        alert("✅ تم التسجيل بنجاح! يمكنك الآن تسجيل الدخول.");
         window.location.href = "index.html";
       } else {
         document.getElementById('error').innerText = result.message;
@@ -43,3 +79,4 @@
 
 </body>
 </html>
+

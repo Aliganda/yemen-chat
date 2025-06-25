@@ -1,43 +1,69 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar">
 <head>
   <meta charset="UTF-8">
   <title>تسجيل دخول - يمن شات</title>
   <style>
-    body { font-family: Arial; background: #f2f2f2; text-align: center; padding: 50px; }
-    input { padding: 10px; margin: 5px; width: 200px; }
-    button { padding: 10px 20px; }
-    .error { color: red; margin-top: 10px; }
+    body {
+      font-family: Arial;
+      background: #f2f2f2;
+      text-align: center;
+      padding: 50px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      width: 220px;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+    .link {
+      margin-top: 15px;
+    }
   </style>
 </head>
 <body>
+
   <h1>تسجيل الدخول إلى يمن شات</h1>
+
   <input type="text" id="username" placeholder="اسم المستخدم" /><br>
   <input type="password" id="password" placeholder="كلمة المرور" /><br>
   <button onclick="login()">دخول</button>
   <div class="error" id="error"></div>
 
+  <div class="link">
+    <a href="register.html">ليس لديك حساب؟ أنشئ حساب جديد</a>
+  </div>
+
   <script>
-  async function login() {
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+    async function login() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
 
-    const response = await fetch('/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
+      const response = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    if (result.success) {
-      localStorage.setItem('user', username);
-      window.location.href = 'chat.html';
-    } else {
-      document.getElementById('error').innerText = result.message;
+      if (result.success) {
+        // جلب صورة المستخدم (إن وجدت)
+        const usersRes = await fetch('/users.json'); // متاح لأن الملف public
+        const users = await usersRes.json();
+        const user = users.find(u => u.username === username);
+
+        localStorage.setItem('user', username);
+        localStorage.setItem('avatar', user.avatar || '');
+        window.location.href = 'chat.html';
+      } else {
+        document.getElementById('error').innerText = result.message;
+      }
     }
-  }
-</script>
+  </script>
 
 </body>
 </html>
